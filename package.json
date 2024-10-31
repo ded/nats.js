@@ -8,7 +8,10 @@
   "scripts": {
     "build": "tsc",
     "test": "jest",
-    "publish": "npm run build && npm publish"
+    "publish": "npm run build && npm publish",
+    "version:patch": "npm version patch",
+    "version:minor": "npm version minor",
+    "version:major": "npm version major"
   },
   "dependencies": {
     "nats": "^2.28.2",
