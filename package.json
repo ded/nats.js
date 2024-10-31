@@ -7,7 +7,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "jest"
+    "test": "jest",
+    "push": "npm run build && npm publish"
   },
   "dependencies": {
     "nats": "^2.28.2",
