@@ -123,11 +123,7 @@ curl --location 'http://localhost:3000/publish' \
 
 ### create a consumer in a different terminal
 
-```bash
-npm run consumer
-```
-
-#### consume a message
+#### consume a message example
 
 ```js
 import express from "express";
