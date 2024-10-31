@@ -1,4 +1,4 @@
-# NATS JetStream Setup Guide to run in local
+# NATS JetStream setup guide to run in local
 
 Guide for setting up NATS JetStream streams and consumers with recommended patterns and commands.
 
@@ -20,10 +20,6 @@ npm config set "//registry.npmjs.org/:_authToken" "<your-token>"
 
 ### Run NATS server with JetStream enabled
 
-```bash
-docker-compose up -d
-```
-
 ```yaml
 # docker-compose.yml
 services:
@@ -34,6 +30,10 @@ services:
     ports:
       - "4222:4222"
       - "8222:8222"
+```
+
+```bash
+docker-compose up -d
 ```
 
 ### create a stream
