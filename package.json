@@ -1,0 +1,24 @@
+{
+  "name": "duro-nats-js",
+  "author": "Duro",
+  "version": "1.0.0",
+  "description": "NATS JetStream client",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "dependencies": {
+    "nats": "^2.28.2",
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "20.11.18",
+    "@types/uuid": "^10.0.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "typescript": "5.4.5"
+  }
+}
