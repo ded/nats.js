@@ -1,7 +1,7 @@
 {
   "name": "@durolabs/nats.js",
   "author": "Duro",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "NATS JetStream client",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
