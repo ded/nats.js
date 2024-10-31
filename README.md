@@ -1,5 +1,3 @@
-# [UNDER CONSTRUCTION]
-
 # NATS JetStream Setup Guide to run in local
 
 Guide for setting up NATS JetStream streams and consumers with recommended patterns and commands.
@@ -27,6 +25,7 @@ docker-compose up -d
 ```
 
 ```yaml
+# docker-compose.yml
 services:
   nats:
     image: nats:latest
@@ -39,15 +38,13 @@ services:
 
 ### create a stream
 
-Streams are message stores that define how messages are stored and what the retention limits are (duration, size, interest).
-
-run below and answer n to all questions
+run below and answer no to all questions
 
 ```bash
 nats stream add EVENTS --subjects "items.>, users.>" --replicas 1 --storage file --retention limits --ack --discard old --dupe-window 2m --max-msgs=-1 --max-msgs-per-subject=-1 --max-bytes=-1 --max-age=0 --max-msg-size=-1 --max-consumers=-1
 ```
 
-## usage
+## Usage
 
 ### Install @durolabs/nats.js
 
@@ -55,7 +52,7 @@ nats stream add EVENTS --subjects "items.>, users.>" --replicas 1 --storage file
 npm install @durolabs/nats.js
 ```
 
-### create a producer
+### create a producer and run it on a port of your choice
 
 ```js
 import express, { Request, Response } from "express";
@@ -98,13 +95,7 @@ async function main() {
 main();
 ```
 
-#### run the producer
-
-```bash
-npm run producer
-```
-
-#### publish a message
+#### publish a message example
 
 ```bash
 curl --location 'http://localhost:3000/publish' \
@@ -174,3 +165,5 @@ main();
 ```
 
 You should see the message in the consumer terminal as soon as you publish a message to the producer.
+
+see a working example here: https://github.com/durolabs/nats-poc
