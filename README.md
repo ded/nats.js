@@ -162,4 +162,4 @@ main();
 
 You should see the message in the consumer terminal as soon as you publish a message to the producer.
 
-see a working example here: https://github.com/durolabs/nats-poc
+see a working example here: https://github.com/durolabs/nats-js-express-example
