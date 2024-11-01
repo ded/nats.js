@@ -51,19 +51,15 @@ jobs:
       - name: Build package
         run: npm run build
 
-      - name: Configure NPM registry
+      - name: Configure NPM registry and Publish
         run: |
           npm config set registry 'https://registry.npmjs.org/'
           npm config set '//registry.npmjs.org/:_authToken' ${{ secrets.NATS_JS_ACCESS_TOKEN }}
-        shell: bash
+          npm publish
+          shell: bash
 
       - name: Print NPM config
         run: npm config list
-
-      - name: Publish to NPM
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NATS_JS_ACCESS_TOKEN }}
 
       - name: Push version changes
         run: |
