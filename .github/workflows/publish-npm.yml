@@ -59,6 +59,8 @@ jobs:
 
       - name: Publish to NPM
         run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NATS_JS_ACCESS_TOKEN }}
 
       - name: Push version changes
         run: |
