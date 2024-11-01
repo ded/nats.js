@@ -53,13 +53,14 @@ jobs:
 
       - name: Configure NPM registry
         run: |
-          npm config set //registry.npmjs.org/:_authToken ${{ secrets.DURONEXT_NATS_JS_ACCESS_TOKEN }}
+          npm config set registry 'https://registry.npmjs.org/'
+          npm config set '//registry.npmjs.org/:_authToken' ${{ secrets.DURONEXT_NATS_JS_ACCESS_TOKEN }}
         shell: bash
 
       - name: Publish to NPM
+        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.DURONEXT_NATS_JS_ACCESS_TOKEN }}
-        run: npm publish
 
       - name: Push version changes
         run: |
