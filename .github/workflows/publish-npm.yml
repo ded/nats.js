@@ -1,14 +1,17 @@
 name: Publish NPM Package
 
+# on:
+#   pull_request:
+#     types: [closed]
+#     branches:
+#       - main
+
 on:
-  pull_request:
-    types: [closed]
-    branches:
-      - main
+  push:
 
 jobs:
   publish:
-    if: github.event.pull_request.merged == true
+    # if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,8 +22,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
-          scope: '@durolabs'
+
+      - name: Configure NPM registry and Publish
+        run: |
+          npm config set '@durolabs:registry' 'https://registry.npmjs.org/' -g
+          npm config set '//registry.npmjs.org/:_authToken' ${{ secrets.NATS_JS_ACCESS_TOKEN }} -g
+          npm publish
+        shell: bash
+          # registry-url: 'https://registry.npmjs.org'
+          # scope: '@durolabs'
 
       - name: Install dependencies
         run: npm ci
@@ -50,13 +60,6 @@ jobs:
 
       - name: Build package
         run: npm run build
-
-      - name: Configure NPM registry and Publish
-        run: |
-          npm config set registry 'https://registry.npmjs.org/'
-          npm config set '//registry.npmjs.org/:_authToken' ${{ secrets.NATS_JS_ACCESS_TOKEN }}
-          npm publish
-          shell: bash
 
       - name: Print NPM config
         run: npm config list
