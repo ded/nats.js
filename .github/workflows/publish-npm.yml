@@ -54,7 +54,7 @@ jobs:
       - name: Configure NPM registry
         run: |
           npm config set '@durolabs:registry' 'https://npm.pkg.github.com' -g
-          npm congif set '//npm.pkg.github.com/:_authToken' ${{ secrets.NATS_JS_ACCESS_TOKEN }} -g
+          npm config set '//npm.pkg.github.com/:_authToken' ${{ secrets.NATS_JS_ACCESS_TOKEN }} -g
         shell: bash
 
       - name: Publish to NPM
