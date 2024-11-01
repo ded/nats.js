@@ -51,10 +51,14 @@ jobs:
       - name: Build package
         run: npm run build
 
+      - name: Configure NPM registry
+        run: |
+          npm config set '@durolabs:registry' 'https://npm.pkg.github.com' -g
+          npm congif set '//npm.pkg.github.com/:_authToken' ${{ secrets.NATS_JS_ACCESS_TOKEN }} -g
+        shell: bash
+
       - name: Publish to NPM
-        run: npm publish --access restricted
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NATS_JS_ACCESS_TOKEN }}
+        run: npm publish
 
       - name: Push version changes
         run: |
