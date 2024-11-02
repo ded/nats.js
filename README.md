@@ -12,10 +12,10 @@ brew install nats-io/nats-tools/nats
 
 ### config npm to install a private package
 
-Note: replace `<your-token>` with npm @durolabs/nats.js from 1password
+Note: replace `<your-token>` with read-only npm access token for @durolabs/nats.js from 1password
 
 ```bash
-npm config set "//registry.npmjs.org/:_authToken" "<your-token>"
+npm config set "//registry.npmjs.org/:_authToken" "<token>"
 ```
 
 ### Run NATS server with JetStream enabled
@@ -49,7 +49,7 @@ nats stream add EVENTS --subjects "items.>, users.>" --replicas 1 --storage file
 ### Install @durolabs/nats.js
 
 ```bash
-npm install @durolabs/nats.js
+npm i @durolabs/nats.js
 ```
 
 ### create a producer and run it on a port of your choice
@@ -147,6 +147,7 @@ async function main() {
   await consumeMessages({
     js,
     streamName: "EVENTS",
+    // event subscriptions
     subjects: ["users.created", "items.created"],
     consumerName,
     processMessage: handleMessage,
@@ -163,3 +164,5 @@ main();
 You should see the message in the consumer terminal as soon as you publish a message to the producer.
 
 see a working example here: https://github.com/durolabs/nats-js-express-example
+
+*Happy event sourcing!*
