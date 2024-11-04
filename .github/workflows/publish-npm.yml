@@ -26,9 +26,8 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-      # TODO: run tests when nats is ready
-      # - name: Run tests
-      #   run: npm test
+      - name: Run tests
+        run: npm test
 
       - name: Determine version bump
         id: version
