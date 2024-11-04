@@ -32,14 +32,11 @@ describe("JetStream Integration Tests", () => {
     timestamp: new Date().toISOString(),
   };
 
-  const DOCKER_COMPOSE_FILE = path.resolve(
-    __dirname,
-    "../test/docker-compose.yml"
-  );
+  const DOCKER_COMPOSE_FILE = "./src/test/docker-compose.yml";
 
   beforeAll(async () => {
     try {
-      await execPromise(`docker-compose -f ${DOCKER_COMPOSE_FILE} up -d`);
+      await execPromise(`docker compose -f ${DOCKER_COMPOSE_FILE} up -d`);
       await new Promise((resolve) => setTimeout(resolve, 2000));
       nc = await connect({ servers: "nats://localhost:5222" });
       js = nc.jetstream();
@@ -56,7 +53,7 @@ describe("JetStream Integration Tests", () => {
 
   afterAll(async () => {
     await nc.drain();
-    await execPromise(`docker-compose -f ${DOCKER_COMPOSE_FILE} down`);
+    await execPromise(`docker compose -f ${DOCKER_COMPOSE_FILE} down`);
   });
 
   it("should create a consumer and process messages", async () => {
