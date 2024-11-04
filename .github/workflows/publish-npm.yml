@@ -53,11 +53,6 @@ jobs:
       - name: Build package
         run: npm run build
 
-      - name: Print NPM config
-        run: |
-          npm config list
-          git status
-
       - name: Publish to NPM
         run: npm publish
         env:
