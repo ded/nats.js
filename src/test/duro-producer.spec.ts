@@ -1,13 +1,13 @@
 import { JetStreamClient, NatsConnection, PubAck } from "nats";
-import { publish, PublishOptions } from "./duro-producer";
-import { checkSubject } from "./utils";
-import { MessageEnvelope } from "./interfaces";
+import { publish, PublishOptions } from "../duro-producer";
+import { checkSubject } from "../utils";
+import { MessageEnvelope } from "../interfaces";
 
 jest.mock("uuid", () => ({
   v4: jest.fn().mockReturnValue("mock-uuid"),
 }));
 
-jest.mock("./utils", () => ({
+jest.mock("../utils", () => ({
   checkSubject: jest.fn(),
 }));
 
@@ -18,19 +18,13 @@ describe("publish", () => {
   let publishOptions: PublishOptions;
 
   beforeEach(() => {
-    // Reset mocks
     jest.clearAllMocks();
-
     mockPubAck = { seq: 1 } as PubAck;
-
     mockJs = {
       publish: jest.fn().mockResolvedValue(mockPubAck),
     } as unknown as jest.Mocked<JetStreamClient>;
-
     mockNc = {} as jest.Mocked<NatsConnection>;
-
     (checkSubject as jest.Mock).mockResolvedValue(true);
-
     publishOptions = {
       js: mockJs,
       nc: mockNc,

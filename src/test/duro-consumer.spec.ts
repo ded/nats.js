@@ -1,7 +1,14 @@
-import { connect, NatsConnection, JetStreamClient, StringCodec, JsMsg } from "nats";
-import { consumeMessages, ConsumerOptions } from "./duro-consumer";
+import {
+  connect,
+  NatsConnection,
+  JetStreamClient,
+  StringCodec,
+  JsMsg,
+} from "nats";
+import { consumeMessages, ConsumerOptions } from "../duro-consumer";
 import { exec } from "child_process";
 import util from "util";
+import path from "path";
 
 const execPromise = util.promisify(exec);
 
@@ -11,7 +18,7 @@ describe("JetStream Integration Tests", () => {
   const sc = StringCodec();
   const streamName = "testStream";
   const subject = "test.subject";
-  const consumerName = "testConsumer";
+  const consumerName = "testConsumer1";
   const messageData1 = {
     id: "test-id-1",
     data: "test-data-1" + Math.random(),
@@ -25,10 +32,12 @@ describe("JetStream Integration Tests", () => {
     timestamp: new Date().toISOString(),
   };
 
-  const DOCKER_COMPOSE_FILE = "duro-nats-js/src/docker-compose.yml";
+  const DOCKER_COMPOSE_FILE = path.resolve(
+    __dirname,
+    "../test/docker-compose.yml"
+  );
 
   beforeAll(async () => {
-    // Start the NATS server in Docker
     try {
       await execPromise(`docker-compose -f ${DOCKER_COMPOSE_FILE} up -d`);
       await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -51,31 +60,21 @@ describe("JetStream Integration Tests", () => {
   });
 
   it("should create a consumer and process messages", async () => {
-    try {
-      const processMessage = jest.fn(async (msg: JsMsg) => {
-        console.log("Processing message:", msg.data);
-        expect(msg.data).toBeDefined();
-        stopSignal.stop = true; // Set stop signal to exit the loop
-
-        // await nc.drain();
-      });
-      const stopSignal = { stop: false }; // Signal to stop the loop
-      const consumerOptions: ConsumerOptions = {
-        streamName,
-        subjects: [subject],
-        consumerName,
-        js,
-        processMessage,
-      };
-      await consumeMessages(consumerOptions, stopSignal);
-
-      const consumePromise = consumeMessages(consumerOptions, stopSignal);
-
-      // Wait for messages to be processed
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+    const processMessage = jest.fn(async (msg: JsMsg) => {
+      console.log("Processing message:", msg.data);
+      expect(msg.data).toBeDefined();
+      expect(msg.data.toString()).toContain("test-data-1");
       stopSignal.stop = true; // Set stop signal to exit the loop
-      // Wait for the consumeMessages function to complete
-      await consumePromise;
-    } catch (error) {}
+    });
+
+    const stopSignal = { stop: false }; // Signal to stop the loop
+    const consumerOptions: ConsumerOptions = {
+      streamName,
+      subjects: [subject],
+      consumerName,
+      js,
+      processMessage,
+    };
+    await Promise.race([consumeMessages(consumerOptions, stopSignal)]);
   });
 });

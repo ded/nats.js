@@ -1,4 +1,12 @@
-import { JetStreamClient, ConsumerConfig, PullOptions, DeliverPolicy, AckPolicy, ReplayPolicy, JsMsg } from "nats";
+import {
+  JetStreamClient,
+  ConsumerConfig,
+  PullOptions,
+  DeliverPolicy,
+  AckPolicy,
+  ReplayPolicy,
+  JsMsg,
+} from "nats";
 import { checkConsumer } from "./utils";
 export interface ConsumerOptions {
   streamName: string;
@@ -33,9 +41,16 @@ async function createJetStreamConsumer(consumerOptions: ConsumerOptions) {
   }
 }
 
-export async function consumeMessages(consumerOptions: ConsumerOptions, stopSignal?: { stop: boolean }) {
+export async function consumeMessages(
+  consumerOptions: ConsumerOptions,
+  stopSignal?: { stop: boolean }
+) {
   const { js } = consumerOptions;
-  const consumerExists = await checkConsumer(js, consumerOptions.streamName, consumerOptions.consumerName);
+  const consumerExists = await checkConsumer(
+    js,
+    consumerOptions.streamName,
+    consumerOptions.consumerName
+  );
   if (!consumerExists) {
     await createJetStreamConsumer(consumerOptions);
   }
@@ -50,7 +65,11 @@ export async function consumeMessages(consumerOptions: ConsumerOptions, stopSign
   };
 
   try {
-    const consumer = await js.consumers.get(consumerOptions.streamName, consumerOptions.consumerName);
+    const consumer = await js.consumers.get(
+      consumerOptions.streamName,
+      consumerOptions.consumerName
+    );
+
     const messages = await consumer.consume(pullOptions);
     for await (const msg of messages) {
       if (stopSignal?.stop) break; // Exit loop if stop signal is true recieved from the consumer
