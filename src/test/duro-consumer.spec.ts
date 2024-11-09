@@ -10,7 +10,7 @@ import { exec } from "child_process";
 import util from "util";
 import path from "path";
 import { MessageEnvelope } from "../interfaces";
-import { ItemEventDto } from "../event-dto/items.event.dto";
+import { ItemEventDto } from "../event-dto/item.event.dto";
 const execPromise = util.promisify(exec);
 
 describe("JetStream Integration Tests", () => {
