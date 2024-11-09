@@ -12,7 +12,7 @@ export interface NatsContext {
   jsm: JetStreamManager;
   js: JetStreamClient;
 }
-
+// TODO: Add more metadata fields if needed
 export interface MessageEnvelope<T = unknown> {
   id: string;
   subject: string;
