@@ -8,12 +8,13 @@ import {
   JsMsg,
 } from "nats";
 import { checkConsumer } from "./utils";
+import { MessageEnvelope } from "./interfaces";
 export interface ConsumerOptions {
   streamName: string;
   subjects: string[];
   consumerName: string;
   js: JetStreamClient;
-  processMessage: (msg: JsMsg) => Promise<void>;
+  processMessage: (messageEnvelope: MessageEnvelope) => Promise<void>;
 }
 
 async function createJetStreamConsumer(consumerOptions: ConsumerOptions) {
@@ -41,7 +42,7 @@ async function createJetStreamConsumer(consumerOptions: ConsumerOptions) {
   }
 }
 
-export async function consumeMessages(
+export async function consumeMessages<T>(
   consumerOptions: ConsumerOptions,
   stopSignal?: { stop: boolean }
 ) {
@@ -74,9 +75,13 @@ export async function consumeMessages(
     for await (const msg of messages) {
       if (stopSignal?.stop) break; // Exit loop if stop signal is true recieved from the consumer
       try {
-        const data = JSON.parse(msg.data.toString());
-        console.log(`Received message subject:${msg.subject} id:${data.id}`);
-        await consumerOptions.processMessage(data);
+        const messageEnvelope: MessageEnvelope<T> = JSON.parse(
+          msg.data.toString()
+        );
+        console.log(
+          `Received message subject:${msg.subject} id:${messageEnvelope.id}`
+        );
+        await consumerOptions.processMessage(messageEnvelope);
         msg.ack();
       } catch (error) {
         console.error("Error processing message:", error);
