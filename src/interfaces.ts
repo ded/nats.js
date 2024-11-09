@@ -1,5 +1,11 @@
 import { UUID } from "crypto";
-import { NatsConnection, JetStreamManager, JetStreamClient, StreamConfig, PubAck } from "nats";
+import {
+  NatsConnection,
+  JetStreamManager,
+  JetStreamClient,
+  StreamConfig,
+  PubAck,
+} from "nats";
 
 export interface NatsContext {
   nc: NatsConnection;
@@ -9,14 +15,17 @@ export interface NatsContext {
 
 export interface MessageEnvelope<T = unknown> {
   id: string;
-  timestamp: number;
   subject: string;
   data: T;
+  created_at: Date;
+  created_by?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface NatsConnectionOptions {
   url: string;
-  token?: string;
+  user?: string;
+  pass?: string;
 }
 
 export interface StreamOptions extends Partial<StreamConfig> {

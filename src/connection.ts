@@ -1,10 +1,13 @@
-import { connect, NatsConnection, JetStreamManager, JetStreamClient, StreamConfig, PubAck } from "nats";
+import { connect, NatsConnection } from "nats";
 import { NatsConnectionOptions, NatsContext } from "./interfaces";
-export async function connectNats(options: NatsConnectionOptions): Promise<NatsContext> {
+export async function connectNats(
+  options: NatsConnectionOptions
+): Promise<NatsContext> {
   try {
     const nc = await connect({
       servers: options.url,
-      token: options.token,
+      user: options?.user,
+      pass: options?.pass,
     });
     const jsm = await nc.jetstreamManager();
     const js = nc.jetstream();
