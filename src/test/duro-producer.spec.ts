@@ -31,6 +31,7 @@ describe("publish", () => {
       data: { test: "data" },
       subject: "test.subject",
       streamName: "test-stream",
+      created_by: "duro-producer",
     };
   });
 
@@ -39,14 +40,18 @@ describe("publish", () => {
 
     const expectedMessage: MessageEnvelope = {
       id: "mock-uuid",
-      timestamp: expect.any(Number),
+      created_at: expect.any(Date),
       subject: "test.subject",
       data: { test: "data" },
     };
 
-    expect(mockJs.publish).toHaveBeenCalledWith("test.subject", expect.any(Uint8Array), {
-      expect: { streamName: "test-stream" },
-    });
+    expect(mockJs.publish).toHaveBeenCalledWith(
+      "test.subject",
+      expect.any(Uint8Array),
+      {
+        expect: { streamName: "test-stream" },
+      }
+    );
 
     const encodedMessageArg = mockJs.publish.mock.calls[0][1];
     expect(result).toBe(mockPubAck);
@@ -55,7 +60,9 @@ describe("publish", () => {
   it("should throw error when JetStream client is not provided", async () => {
     publishOptions.js = undefined as unknown as JetStreamClient;
 
-    await expect(publish(publishOptions)).rejects.toThrow("JetStream client not established");
+    await expect(publish(publishOptions)).rejects.toThrow(
+      "JetStream client not established"
+    );
   });
 
   it("should throw error when data is not provided", async () => {
@@ -67,31 +74,43 @@ describe("publish", () => {
   it("should throw error when subject is not provided", async () => {
     publishOptions.subject = "";
 
-    await expect(publish(publishOptions)).rejects.toThrow("Subject is required");
+    await expect(publish(publishOptions)).rejects.toThrow(
+      "Subject is required"
+    );
   });
 
   it("should throw error when stream name is not provided", async () => {
     publishOptions.streamName = "";
 
-    await expect(publish(publishOptions)).rejects.toThrow("Stream name is required");
+    await expect(publish(publishOptions)).rejects.toThrow(
+      "Stream name is required"
+    );
   });
 
   it("should throw error when subject does not exist in stream", async () => {
     (checkSubject as jest.Mock).mockResolvedValue(false);
 
-    await expect(publish(publishOptions)).rejects.toThrow("Subject test.subject does not exist in stream test-stream");
+    await expect(publish(publishOptions)).rejects.toThrow(
+      "Subject test.subject does not exist in stream test-stream"
+    );
   });
 
   it("should throw error when publish fails", async () => {
     const error = new Error("Publish failed");
     mockJs.publish.mockRejectedValue(error);
 
-    await expect(publish(publishOptions)).rejects.toThrow("Error publishing to JetStream: Publish failed");
+    await expect(publish(publishOptions)).rejects.toThrow(
+      "Error publishing to JetStream: Publish failed"
+    );
   });
 
   it("should handle subject check failure", async () => {
-    (checkSubject as jest.Mock).mockRejectedValue(new Error("Failed to check subject"));
+    (checkSubject as jest.Mock).mockRejectedValue(
+      new Error("Failed to check subject")
+    );
 
-    await expect(publish(publishOptions)).rejects.toThrow("Failed to check subject");
+    await expect(publish(publishOptions)).rejects.toThrow(
+      "Failed to check subject"
+    );
   });
 });
