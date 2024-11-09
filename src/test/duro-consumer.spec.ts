@@ -9,7 +9,8 @@ import { consumeMessages, ConsumerOptions } from "../duro-consumer";
 import { exec } from "child_process";
 import util from "util";
 import path from "path";
-
+import { MessageEnvelope } from "../interfaces";
+import { ItemEventDto } from "../event-dto/item.event.dto";
 const execPromise = util.promisify(exec);
 
 describe("JetStream Integration Tests", () => {
@@ -19,17 +20,26 @@ describe("JetStream Integration Tests", () => {
   const streamName = "testStream";
   const subject = "test.subject";
   const consumerName = "testConsumer1";
-  const messageData1 = {
+  const messageData1: MessageEnvelope<string> = {
     id: "test-id-1",
     data: "test-data-1" + Math.random(),
     subject,
-    timestamp: new Date().toISOString(),
+    created_at: new Date(),
   };
-  const messageData2 = {
+  const messageData2: MessageEnvelope<ItemEventDto> = {
     id: "test-id-2",
-    data: "test-data-2" + Math.random(),
+    data: {
+      id: "test-id-2",
+      name: "test-name-2",
+      cpn: "test-cpn-2",
+      category: "test-category-2",
+      status: "test-status-2",
+      created_at: new Date(),
+      updated_at: new Date(),
+      created_by: "test-created-by-2",
+    },
+    created_at: new Date(),
     subject,
-    timestamp: new Date().toISOString(),
   };
 
   const DOCKER_COMPOSE_FILE = "./src/test/docker-compose.yml";
@@ -57,10 +67,10 @@ describe("JetStream Integration Tests", () => {
   });
 
   it("should create a consumer and process messages", async () => {
-    const processMessage = jest.fn(async (msg: JsMsg) => {
+    const processMessage = jest.fn(async (msg: MessageEnvelope) => {
       console.log("Processing message:", msg.data);
       expect(msg.data).toBeDefined();
-      expect(msg.data.toString()).toContain("test-data-1");
+      expect(msg.data).toContain("test-data-1");
       stopSignal.stop = true; // Set stop signal to exit the loop
     });
 
