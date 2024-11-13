@@ -10,14 +10,6 @@ Guide for setting up NATS JetStream streams and consumers with recommended patte
 brew install nats-io/nats-tools/nats
 ```
 
-### config npm to install a private package
-
-Note: replace `<your-token>` with read-only npm access token for @durolabs/nats.js from 1password
-
-```bash
-npm config set "//registry.npmjs.org/:_authToken" "<token>"
-```
-
 ### Run NATS server with JetStream enabled
 
 ```yaml
