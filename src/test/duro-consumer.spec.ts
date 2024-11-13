@@ -10,7 +10,7 @@ import { exec } from "child_process";
 import util from "util";
 import path from "path";
 import { MessageEnvelope } from "../interfaces";
-import { ItemEventDto } from "../event-dto/item.event.dto";
+import { ItemCreatedEventDto } from "../event-dto/item-created.event.dto";
 const execPromise = util.promisify(exec);
 
 describe("JetStream Integration Tests", () => {
@@ -26,16 +26,14 @@ describe("JetStream Integration Tests", () => {
     subject,
     created_at: new Date(),
   };
-  const messageData2: MessageEnvelope<ItemEventDto> = {
+  const messageData2: MessageEnvelope<ItemCreatedEventDto> = {
     id: "test-id-2",
     data: {
       id: "test-id-2",
       name: "test-name-2",
       cpn: "test-cpn-2",
       category: "test-category-2",
-      status: "test-status-2",
       created_at: new Date(),
-      updated_at: new Date(),
       created_by: "test-created-by-2",
     },
     created_at: new Date(),
