@@ -1,10 +1,4 @@
-import {
-  connect,
-  NatsConnection,
-  JetStreamClient,
-  StringCodec,
-  JsMsg,
-} from "nats";
+import { connect, NatsConnection, JetStreamClient, StringCodec } from "nats";
 import { consumeMessages, ConsumerOptions } from "../duro-consumer";
 import { exec } from "child_process";
 import util from "util";
