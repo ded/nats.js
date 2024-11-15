@@ -3,6 +3,6 @@ export interface ItemCreatedEventDto {
   name: string;
   cpn?: string;
   category?: string;
-  created_at: Date;
-  created_by: string;
+  createdAt: Date;
+  createdBy: string;
 }

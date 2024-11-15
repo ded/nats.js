@@ -15,7 +15,7 @@ describe("publish", () => {
   let mockJs: jest.Mocked<JetStreamClient>;
   let mockNc: jest.Mocked<NatsConnection>;
   let mockPubAck: PubAck;
-  let publishOptions: PublishOptions;
+  let publishOptions: PublishOptions<{ test: string }>;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -28,10 +28,14 @@ describe("publish", () => {
     publishOptions = {
       js: mockJs,
       nc: mockNc,
-      data: { test: "data" },
-      subject: "test.subject",
       streamName: "test-stream",
-      created_by: "duro-producer",
+      messageEnvelope: {
+        id: "mock-uuid",
+        createdAt: new Date(),
+        subject: "test.subject",
+        data: { test: "data" },
+        createdBy: "duro-producer",
+      },
     };
   });
 
@@ -40,9 +44,10 @@ describe("publish", () => {
 
     const expectedMessage: MessageEnvelope = {
       id: "mock-uuid",
-      created_at: expect.any(Date),
+      createdAt: expect.any(Date),
       subject: "test.subject",
       data: { test: "data" },
+      createdBy: "duro-producer",
     };
 
     expect(mockJs.publish).toHaveBeenCalledWith(
@@ -66,13 +71,13 @@ describe("publish", () => {
   });
 
   it("should throw error when data is not provided", async () => {
-    publishOptions.data = undefined as unknown as any;
+    publishOptions.messageEnvelope.data = undefined as unknown as any;
 
     await expect(publish(publishOptions)).rejects.toThrow("Data is required");
   });
 
   it("should throw error when subject is not provided", async () => {
-    publishOptions.subject = "";
+    publishOptions.messageEnvelope.subject = "";
 
     await expect(publish(publishOptions)).rejects.toThrow(
       "Subject is required"

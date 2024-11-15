@@ -3,20 +3,22 @@ import { MessageEnvelope } from "./interfaces";
 import { v4 as uuidv4 } from "uuid";
 import { checkSubject } from "./utils";
 
-export interface PublishOptions<T = unknown> {
+export interface PublishOptions<T> {
   js: JetStreamClient;
   nc: NatsConnection;
-  data: T;
-  subject: string;
   streamName: string;
-  created_by: string;
+  messageEnvelope: MessageEnvelope<T>;
 }
 
-export async function publish(publishOptions: PublishOptions): Promise<PubAck> {
-  const { js, nc, data, subject, streamName } = publishOptions;
+export async function publish<T>(
+  publishOptions: PublishOptions<T>
+): Promise<PubAck> {
+  const { js, nc, streamName, messageEnvelope } = publishOptions;
+  const { subject, data } = messageEnvelope;
   if (!js) throw new Error("JetStream client not established");
-  if (!data) throw new Error("Data is required");
+  if (!messageEnvelope) throw new Error("Message envelope is required");
   if (!subject) throw new Error("Subject is required");
+  if (!data) throw new Error("Data is required");
   if (!streamName) throw new Error("Stream name is required");
   const subjectExists = await checkSubject(nc, streamName, subject);
   if (!subjectExists)
@@ -26,8 +28,8 @@ export async function publish(publishOptions: PublishOptions): Promise<PubAck> {
 
   const message: MessageEnvelope = {
     id: uuidv4(),
-    created_at: new Date(),
-    created_by: publishOptions.created_by,
+    createdAt: new Date(),
+    createdBy: messageEnvelope.createdBy,
     subject,
     data,
   };
