@@ -18,7 +18,7 @@ export interface MessageEnvelope<T = unknown> {
   subject: string;
   data: T;
   created_at: Date;
-  created_by?: string;
+  created_by: string;
   metadata?: Record<string, unknown>;
 }
 
