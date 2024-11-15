@@ -18,7 +18,8 @@ describe("JetStream Integration Tests", () => {
     id: "test-id-1",
     data: "test-data-1" + Math.random(),
     subject,
-    created_at: new Date(),
+    createdAt: new Date(),
+    createdBy: "test-created-by-1",
   };
   const messageData2: MessageEnvelope<ItemCreatedEventDto> = {
     id: "test-id-2",
@@ -27,11 +28,12 @@ describe("JetStream Integration Tests", () => {
       name: "test-name-2",
       cpn: "test-cpn-2",
       category: "test-category-2",
-      created_at: new Date(),
-      created_by: "test-created-by-2",
+      createdAt: new Date(),
+      createdBy: "test-created-by-2",
     },
-    created_at: new Date(),
+    createdAt: new Date(),
     subject,
+    createdBy: "test-created-by-2",
   };
 
   const DOCKER_COMPOSE_FILE = "./src/test/docker-compose.yml";
