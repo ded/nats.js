@@ -44,13 +44,15 @@ nats stream add EVENTS --subjects "items.>, users.>" --replicas 1 --storage file
 npm i @durolabs/nats.js
 ```
 
-### create a producer and run it on a port of your choice
+### Steps:
 
-#### publish a message example
+create a producer and run it on a port of your choice
 
-### create a consumer in a different terminal
+publish messages
 
-#### consume a message example
+create a consumer in a different terminal
+
+consume a message example
 
 You should see the message in the consumer terminal as soon as you publish a message to the producer.
 
