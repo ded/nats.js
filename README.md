@@ -46,13 +46,13 @@ npm i @durolabs/nats.js
 
 ### Steps:
 
-create a producer and run it on a port of your choice
+- create a producer and run it on a port of your choice
 
-publish messages
+- publish messages
 
-create a consumer in a different terminal
+- create a consumer in a different terminal
 
-consume a message example
+- consume a message example
 
 You should see the message in the consumer terminal as soon as you publish a message to the producer.
 
