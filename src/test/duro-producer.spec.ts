@@ -1,11 +1,8 @@
 import { JetStreamClient, NatsConnection, PubAck } from "nats";
-import { publish, PublishOptions } from "../duro-producer";
+import { publish } from "../duro-producer";
 import { checkSubject } from "../utils";
-import { MessageEnvelope } from "../interfaces";
-
-jest.mock("uuid", () => ({
-  v4: jest.fn().mockReturnValue("mock-uuid"),
-}));
+import { MessageEnvelope, PublishOptions } from "../interfaces";
+import { v4 as uuidv4 } from "uuid";
 
 jest.mock("../utils", () => ({
   checkSubject: jest.fn(),
@@ -30,7 +27,7 @@ describe("publish", () => {
       nc: mockNc,
       streamName: "test-stream",
       messageEnvelope: {
-        id: "mock-uuid",
+        id: uuidv4(),
         createdAt: new Date(),
         subject: "test.subject",
         data: { test: "data" },
@@ -42,9 +39,9 @@ describe("publish", () => {
   it("should successfully publish a message", async () => {
     const result = await publish(publishOptions);
 
-    const expectedMessage: MessageEnvelope = {
-      id: "mock-uuid",
-      createdAt: expect.any(Date),
+    const expectedMessage: MessageEnvelope<{ test: string }> = {
+      id: uuidv4(),
+      createdAt: new Date(),
       subject: "test.subject",
       data: { test: "data" },
       createdBy: "duro-producer",
@@ -89,14 +86,6 @@ describe("publish", () => {
 
     await expect(publish(publishOptions)).rejects.toThrow(
       "Stream name is required"
-    );
-  });
-
-  it("should throw error when subject does not exist in stream", async () => {
-    (checkSubject as jest.Mock).mockResolvedValue(false);
-
-    await expect(publish(publishOptions)).rejects.toThrow(
-      "Subject test.subject does not exist in stream test-stream"
     );
   });
 

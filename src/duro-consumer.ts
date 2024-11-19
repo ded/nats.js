@@ -9,15 +9,15 @@ import {
 } from "nats";
 import { checkConsumer } from "./utils";
 import { MessageEnvelope } from "./interfaces";
-export interface ConsumerOptions {
+export interface ConsumerOptions<T> {
   streamName: string;
   subjects: string[];
   consumerName: string;
   js: JetStreamClient;
-  processMessage: (messageEnvelope: MessageEnvelope) => Promise<void>;
+  processMessage: (messageEnvelope: MessageEnvelope<T>) => Promise<void>;
 }
 
-async function createJetStreamConsumer(consumerOptions: ConsumerOptions) {
+async function createJetStreamConsumer<T>(consumerOptions: ConsumerOptions<T>) {
   const { js, streamName, consumerName, subjects } = consumerOptions;
   try {
     // Create the consumer configuration
@@ -43,7 +43,7 @@ async function createJetStreamConsumer(consumerOptions: ConsumerOptions) {
 }
 
 export async function consumeMessages<T>(
-  consumerOptions: ConsumerOptions,
+  consumerOptions: ConsumerOptions<T>,
   stopSignal?: { stop: boolean }
 ) {
   const { js } = consumerOptions;
