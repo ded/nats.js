@@ -42,10 +42,7 @@ async function createJetStreamConsumer<T>(consumerOptions: ConsumerOptions<T>) {
   }
 }
 
-export async function consumeMessages<T>(
-  consumerOptions: ConsumerOptions<T>,
-  stopSignal?: { stop: boolean }
-) {
+export async function consumeMessages<T>(consumerOptions: ConsumerOptions<T>) {
   const { js } = consumerOptions;
   const consumerExists = await checkConsumer(
     js,
@@ -59,7 +56,7 @@ export async function consumeMessages<T>(
   //TODO these options are subject to change but for now they are good
   const pullOptions: PullOptions = {
     batch: 10, // Number of messages to pull at once
-    expires: 1000, // Pull request expires after 30 seconds
+    expires: 10000, // Pull request expires after 10 seconds
     no_wait: false, // Wait for messages if none available
     max_bytes: 1 * 1024 * 1024, // 1MB
     idle_heartbeat: 500, // 1 second in nanoseconds
@@ -73,7 +70,6 @@ export async function consumeMessages<T>(
 
     const messages = await consumer.consume(pullOptions);
     for await (const msg of messages) {
-      if (stopSignal?.stop) break; // Exit loop if stop signal is true recieved from the consumer
       try {
         const messageEnvelope: MessageEnvelope<T> = JSON.parse(
           msg.data.toString()
