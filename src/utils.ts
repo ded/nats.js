@@ -12,7 +12,11 @@ function subjectMatchesPattern(subject: string, pattern: string): boolean {
   return regex.test(subject);
 }
 
-async function checkConsumer(js: JetStreamClient, streamName: string, consumerName: string): Promise<boolean> {
+async function checkConsumer(
+  js: JetStreamClient,
+  streamName: string,
+  consumerName: string
+): Promise<boolean> {
   try {
     await js.consumers.get(streamName, consumerName);
     return true;
@@ -27,13 +31,29 @@ async function checkConsumer(js: JetStreamClient, streamName: string, consumerNa
   }
 }
 
-async function checkSubject(nc: NatsConnection, streamName: string, subject: string): Promise<boolean> {
+async function checkSubject(
+  nc: NatsConnection,
+  streamName: string,
+  subject: string
+): Promise<void> {
   try {
     const jsm = await nc.jetstreamManager();
     const streamInfo = await jsm.streams.info(streamName);
-    return streamInfo.config.subjects.some((pattern) => subjectMatchesPattern(subject, pattern));
+    const subjectExists = streamInfo.config.subjects.some((pattern) =>
+      subjectMatchesPattern(subject, pattern)
+    );
+
+    if (!subjectExists) {
+      // If the subject doesn't exist, add it to the stream configuration
+      const updatedSubjects = [...streamInfo.config.subjects, subject];
+      const updatedConfig = { ...streamInfo.config, subjects: updatedSubjects };
+      await jsm.streams.update(streamName, updatedConfig);
+      console.log(`Subject ${subject} added to stream ${streamName}`);
+    }
   } catch (err: any) {
-    console.error(`Error retrieving stream information: ${err.message}`);
+    console.error(
+      `Error retrieving or updating stream information: ${err.message}`
+    );
     throw err;
   }
 }

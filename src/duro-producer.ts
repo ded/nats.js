@@ -1,15 +1,13 @@
-import { PubAck, JetStreamClient, NatsConnection } from "nats";
-import { MessageEnvelope } from "./interfaces";
-import { v4 as uuidv4 } from "uuid";
+import { PubAck } from "nats";
+import { PublishOptions } from "./interfaces";
 import { checkSubject } from "./utils";
+import { validate as isUUID } from "uuid";
 
-export interface PublishOptions<T> {
-  js: JetStreamClient;
-  nc: NatsConnection;
-  streamName: string;
-  messageEnvelope: MessageEnvelope<T>;
-}
-
+/**
+ * @description Publish a message to a stream
+ * @param publishOptions - The publish options
+ * @returns The publish ack
+ */
 export async function publish<T>(
   publishOptions: PublishOptions<T>
 ): Promise<PubAck> {
@@ -17,24 +15,19 @@ export async function publish<T>(
   const { subject, data } = messageEnvelope;
   if (!js) throw new Error("JetStream client not established");
   if (!messageEnvelope) throw new Error("Message envelope is required");
+  if (!messageEnvelope.id || !isUUID(messageEnvelope.id)) {
+    throw new Error("Message id is required and must be a valid UUID");
+  }
   if (!subject) throw new Error("Subject is required");
   if (!data) throw new Error("Data is required");
   if (!streamName) throw new Error("Stream name is required");
-  const subjectExists = await checkSubject(nc, streamName, subject);
-  if (!subjectExists)
-    throw new Error(
-      `Subject ${subject} does not exist in stream ${streamName}`
-    );
 
-  const message: MessageEnvelope = {
-    id: uuidv4(),
-    createdAt: new Date(),
-    createdBy: messageEnvelope.createdBy,
-    subject,
-    data,
-  };
+  await checkSubject(nc, streamName, subject);
+
   try {
-    const encodedMessage = new TextEncoder().encode(JSON.stringify(message));
+    const encodedMessage = new TextEncoder().encode(
+      JSON.stringify(messageEnvelope)
+    );
     const pubOpts = { expect: { streamName } };
     const ack = await js.publish(subject, encodedMessage, pubOpts);
     console.log(
