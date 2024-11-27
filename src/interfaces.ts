@@ -38,12 +38,12 @@ export interface MessageEnvelope<T = unknown> {
 
 /**
  * @description Nats connection options
- * @url - The url of the nats server
+ * @url - The url of the nats server or an array of urls
  * @user - The user of the nats server
  * @pass - The password of the nats server
  */
 export interface NatsConnectionOptions {
-  url: string;
+  url: string | string[];
   user?: string;
   pass?: string;
 }
