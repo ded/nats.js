@@ -9,28 +9,45 @@ import { NatsConnectionOptions, NatsContext } from "./interfaces";
 export async function connectNats(
   options: NatsConnectionOptions
 ): Promise<NatsContext> {
-  try {
-    const servers = Array.isArray(options.url) ? options.url : [options.url];
+  const maxRetries = 3;
+  const retryDelay = 1000; // 1 second between retries
 
-    const nc: NatsConnection = await connect({
-      servers, // Pass as array
-      user: options?.user,
-      pass: options?.pass,
-      timeout: 5000,
-      maxReconnectAttempts: 5,
-    });
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const servers = Array.isArray(options.url) ? options.url : [options.url];
 
-    const jsm: JetStreamManager = await nc.jetstreamManager();
-    const js: JetStreamClient = nc.jetstream();
+      const nc: NatsConnection = await connect({
+        servers,
+        user: options?.user,
+        pass: options?.pass,
+        timeout: 10000,
+        waitOnFirstConnect: true,
+        reconnectTimeWait: 500,
+        reconnectJitter: 100,
+        maxReconnectAttempts: 5,
+      });
 
-    console.log(`Connected to NATS server with JetStream ${nc.getServer()}`);
-    return { nc, jsm, js };
-  } catch (err: any) {
-    console.error("NATS Connection Error:", err);
-    throw new Error(
-      `Error connecting to NATS server: ${err.code || err.message}`
-    );
+      // Small delay before JetStream initialization
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      const jsm: JetStreamManager = await nc.jetstreamManager();
+      const js: JetStreamClient = nc.jetstream();
+
+      return { nc, jsm, js };
+    } catch (err: any) {
+      if (attempt === maxRetries) {
+        throw new Error(
+          `Failed to connect to NATS server after ${maxRetries} attempts: ${
+            err.code || err.message
+          }`
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, retryDelay));
+    }
   }
+
+  // TypeScript requires this even though it's unreachable
+  throw new Error("Failed to connect to NATS server");
 }
 
 export async function disconnectNats(nc: NatsConnection) {
