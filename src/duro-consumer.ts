@@ -27,8 +27,8 @@ async function createJetStreamConsumer<T>(consumerOptions: ConsumerOptions<T>) {
       filter_subjects: subjects,
       deliver_policy: DeliverPolicy.All,
       ack_policy: AckPolicy.Explicit,
-      max_deliver: 1, // Maximum redelivery attempts
-      ack_wait: 30, // 30 seconds in nanoseconds
+      max_deliver: 3, // Maximum redelivery attempts
+      ack_wait: 30000, // 30 seconds in nanoseconds
       max_ack_pending: 1, //set to 1 for strict ordering
       replay_policy: ReplayPolicy.Instant, // Maximum pending acknowledgments
       max_waiting: 512,
@@ -56,10 +56,10 @@ export async function consumeMessages<T>(consumerOptions: ConsumerOptions<T>) {
   //TODO these options are subject to change but for now they are good
   const pullOptions: PullOptions = {
     batch: 10, // Number of messages to pull at once
-    expires: 10000, // Pull request expires after 10 seconds
+    expires: 30000, // Pull request expires after x milliseconds
     no_wait: false, // Wait for messages if none available
-    max_bytes: 1 * 1024 * 1024, // 1MB
-    idle_heartbeat: 500, // 1 second in nanoseconds
+    max_bytes: 2 * 1024 * 1024,
+    idle_heartbeat: 1000, // 1 second in nanoseconds
   };
 
   try {
@@ -75,9 +75,10 @@ export async function consumeMessages<T>(consumerOptions: ConsumerOptions<T>) {
           msg.data.toString()
         );
         console.log(
-          `Received message subject:${msg.subject} id:${messageEnvelope.id}`
+          `Consumer received message - Subject: ${msg.subject}, ID: ${messageEnvelope.id}, Sequence: ${msg.seq}`
         );
         await consumerOptions.processMessage(messageEnvelope);
+        console.log(`Successfully processed message: ${messageEnvelope.id}`);
         msg.ack();
       } catch (error) {
         console.error("Error processing message:", error);
