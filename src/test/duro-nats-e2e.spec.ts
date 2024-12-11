@@ -1,5 +1,6 @@
-import { connect, NatsConnection, JetStreamClient } from "nats";
-import { consumeMessages, ConsumerOptions } from "../duro-consumer";
+import { connect, NatsConnection, JetStreamClient, JsMsg } from "nats";
+import { consumeMessages } from "../duro-consumer";
+import { ConsumerOptions } from "../interfaces";
 import { exec } from "child_process";
 import util from "util";
 import { MessageEnvelope } from "../interfaces";
@@ -141,11 +142,13 @@ describe("JetStream Integration Tests", () => {
 
     const messageReceived: MessageEnvelope<ItemCreatedEventDto>[] = [];
     const processMessage = async (
-      messageEnvelope: MessageEnvelope<ItemCreatedEventDto>
+      messageEnvelope: MessageEnvelope<ItemCreatedEventDto>,
+      msg: JsMsg
     ) => {
       messageEnvelope.createdAt = new Date(messageEnvelope.createdAt);
       console.log("Processing message:", messageEnvelope.subject);
       messageReceived.push(messageEnvelope);
+      msg.ack();
     };
 
     const consumerOptions: ConsumerOptions<ItemCreatedEventDto> = {

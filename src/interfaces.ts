@@ -4,6 +4,9 @@ import {
   JetStreamClient,
   StreamConfig,
   PubAck,
+  ConsumerConfig,
+  PullOptions,
+  JsMsg,
 } from "nats";
 /**
  * @description Nats context for publishing and consuming messages
@@ -71,4 +74,29 @@ export interface PublishOptions<T> {
   nc: NatsConnection;
   streamName: string;
   messageEnvelope: MessageEnvelope<T>;
+}
+
+export interface ProcessMessage<T> {
+  (messageEnvelope: MessageEnvelope<T>, msg: JsMsg): Promise<void>;
+}
+
+/**
+ * @description Consumer options for consuming messages
+ * @template T - The type of the data in the message
+ * @streamName - The name of the stream e.g. "EVENTS"
+ * @subjects - The subjects of the stream
+ * @consumerName - The name of the consumer
+ * @js - The jetstream client
+ * @processMessage - The function to process the message
+ * @consumerConfig - The consumer config of type ConsumerConfig
+ * @pullOptions - The pull options for pulling messages
+ */
+export interface ConsumerOptions<T> {
+  streamName: string;
+  subjects: string[];
+  consumerName: string;
+  js: JetStreamClient;
+  processMessage: ProcessMessage<T>;
+  consumerConfig?: ConsumerConfig;
+  pullOptions?: PullOptions;
 }
