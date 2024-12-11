@@ -14,7 +14,6 @@ async function createJetStreamConsumer<T>(consumerOptions: ConsumerOptions<T>) {
   const _consumerConfig = consumerOptions.consumerConfig;
   try {
     // Create the consumer configuration
-    //TODO these options are subject to change but for now they are good
     const consumerConfig: ConsumerConfig = {
       durable_name: _consumerConfig?.durable_name || consumerName,
       filter_subjects: _consumerConfig?.filter_subjects || subjects,
@@ -25,7 +24,6 @@ async function createJetStreamConsumer<T>(consumerOptions: ConsumerOptions<T>) {
       max_ack_pending: _consumerConfig?.max_ack_pending || 1, //set to 1 for strict ordering
       replay_policy: _consumerConfig?.replay_policy || ReplayPolicy.Instant, // Maximum pending acknowledgments
       max_waiting: _consumerConfig?.max_waiting || 512,
-      num_replicas: _consumerConfig?.num_replicas || 3,
     };
     const jsm = await js.jetstreamManager();
     const consumerInfo = await jsm.consumers.add(streamName, consumerConfig);
@@ -71,8 +69,8 @@ export async function consumeMessages<T>(consumerOptions: ConsumerOptions<T>) {
         console.log(
           `Received message subject:${msg.subject} id:${messageEnvelope.id}`
         );
-        await consumerOptions.processMessage(messageEnvelope);
-        msg.ack();
+        // ack the message happens in the processMessage function
+        await consumerOptions.processMessage(messageEnvelope, msg);
       } catch (error) {
         console.error("Error processing message:", error);
         // Handle redelivery based on attempt count

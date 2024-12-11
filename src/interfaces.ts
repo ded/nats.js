@@ -6,6 +6,7 @@ import {
   PubAck,
   ConsumerConfig,
   PullOptions,
+  JsMsg,
 } from "nats";
 /**
  * @description Nats context for publishing and consuming messages
@@ -75,6 +76,10 @@ export interface PublishOptions<T> {
   messageEnvelope: MessageEnvelope<T>;
 }
 
+export interface ProcessMessage<T> {
+  (messageEnvelope: MessageEnvelope<T>, msg: JsMsg): Promise<void>;
+}
+
 /**
  * @description Consumer options for consuming messages
  * @template T - The type of the data in the message
@@ -91,7 +96,7 @@ export interface ConsumerOptions<T> {
   subjects: string[];
   consumerName: string;
   js: JetStreamClient;
-  processMessage: (messageEnvelope: MessageEnvelope<T>) => Promise<void>;
+  processMessage: ProcessMessage<T>;
   consumerConfig?: ConsumerConfig;
   pullOptions?: PullOptions;
 }
