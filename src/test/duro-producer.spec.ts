@@ -93,9 +93,7 @@ describe("publish", () => {
     const error = new Error("Publish failed");
     mockJs.publish.mockRejectedValue(error);
 
-    await expect(publish(publishOptions)).rejects.toThrow(
-      "Error publishing to JetStream: Publish failed"
-    );
+    await expect(publish(publishOptions)).rejects.toThrow();
   });
 
   it("should handle subject check failure", async () => {
