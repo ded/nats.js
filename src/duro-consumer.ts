@@ -9,82 +9,123 @@ import {
 import { checkConsumer } from "./utils";
 import { MessageEnvelope, ConsumerOptions } from "./interfaces";
 
+const DEFAULT_CONSUMER_CONFIG = {
+  deliver_policy: DeliverPolicy.All,
+  ack_policy: AckPolicy.Explicit,
+  max_deliver: 3,
+  ack_wait: 10e9,
+  max_ack_pending: 1,
+  replay_policy: ReplayPolicy.Instant,
+  max_waiting: 512,
+};
+
+const DEFAULT_PULL_OPTIONS = {
+  batch: 10,
+  expires: 10000,
+  no_wait: false,
+  max_bytes: 1 * 1024 * 1024,
+  idle_heartbeat: 500,
+};
+
 async function createJetStreamConsumer<T>(consumerOptions: ConsumerOptions<T>) {
-  const { js, streamName, consumerName, subjects } = consumerOptions;
-  const _consumerConfig = consumerOptions.consumerConfig;
+  const {
+    js,
+    streamName,
+    consumerName,
+    subjects,
+    consumerConfig: customConfig,
+  } = consumerOptions;
+
+  const consumerConfig: ConsumerConfig = {
+    ...DEFAULT_CONSUMER_CONFIG,
+    durable_name: customConfig?.durable_name || consumerName,
+    filter_subjects: customConfig?.filter_subjects || subjects,
+    ...customConfig,
+  };
+
   try {
-    // Create the consumer configuration
-    const consumerConfig: ConsumerConfig = {
-      durable_name: _consumerConfig?.durable_name || consumerName,
-      filter_subjects: _consumerConfig?.filter_subjects || subjects,
-      deliver_policy: _consumerConfig?.deliver_policy || DeliverPolicy.All,
-      ack_policy: _consumerConfig?.ack_policy || AckPolicy.Explicit,
-      max_deliver: _consumerConfig?.max_deliver || 3, // Maximum redelivery attempts
-      ack_wait: 10e9,
-      max_ack_pending: _consumerConfig?.max_ack_pending || 1, //set to 1 for strict ordering
-      replay_policy: _consumerConfig?.replay_policy || ReplayPolicy.Instant, // Maximum pending acknowledgments
-      max_waiting: _consumerConfig?.max_waiting || 512,
-    };
     const jsm = await js.jetstreamManager();
-    const consumerInfo = await jsm.consumers.add(streamName, consumerConfig);
-    return consumerInfo;
+    return await jsm.consumers.add(streamName, consumerConfig);
   } catch (error) {
     console.error("Error creating consumer:", error);
     throw error;
   }
 }
 
-export async function consumeMessages<T>(consumerOptions: ConsumerOptions<T>) {
-  const { js } = consumerOptions;
-  const consumerExists = await checkConsumer(
-    js,
-    consumerOptions.streamName,
-    consumerOptions.consumerName
-  );
-  if (!consumerExists) {
-    await createJetStreamConsumer(consumerOptions);
-  }
-  const _pullOptions = consumerOptions.pullOptions;
-  //TODO these options are subject to change but for now they are good
-  const pullOptions: PullOptions = {
-    batch: _pullOptions?.batch || 10, // Number of messages to pull at once
-    expires: _pullOptions?.expires || 10000, // Pull request expires after 10 seconds
-    no_wait: _pullOptions?.no_wait || false, // Wait for messages if none available
-    max_bytes: _pullOptions?.max_bytes || 1 * 1024 * 1024, // 1MB
-    idle_heartbeat: _pullOptions?.idle_heartbeat || 500, // 1 second in nanoseconds
-  };
+function isConnectionActive(js: any): boolean {
+  return !js.nc.isDraining() && !js.nc.isClosed();
+}
 
+async function processMessage<T>(
+  msg: JsMsg,
+  consumerOptions: ConsumerOptions<T>
+) {
   try {
-    const consumer = await js.consumers.get(
-      consumerOptions.streamName,
-      consumerOptions.consumerName
-    );
+    if (!isConnectionActive(consumerOptions.js)) return;
 
-    const messages = await consumer.consume(pullOptions);
-    for await (const msg of messages) {
-      try {
-        const messageEnvelope: MessageEnvelope<T> = JSON.parse(
-          msg.data.toString()
-        );
-        console.log(
-          `Received message subject:${msg.subject} id:${messageEnvelope.id}`
-        );
-        // ack the message happens in the processMessage function
-        await consumerOptions.processMessage(messageEnvelope, msg);
-      } catch (error) {
-        console.error("Error processing message:", error);
-        // Handle redelivery based on attempt count
-        const deliveryCount = msg.info.redeliveryCount || 0;
-        if (deliveryCount >= 3) {
-          console.error("Message failed maximum retries:", msg.data.toString());
-          msg.term(); // Terminal error - won't be redelivered
-        } else {
-          msg.nak(5000); // Negative ack - retry after 5 seconds
-        }
-      }
-    }
+    const messageEnvelope: MessageEnvelope<T> = JSON.parse(msg.data.toString());
+    console.log(
+      `Received message subject:${msg.subject} id:${messageEnvelope.id}`
+    );
+    await consumerOptions.processMessage(messageEnvelope, msg);
   } catch (error) {
-    console.error("Error in message consumption:", error);
-    throw error;
+    if (!isConnectionActive(consumerOptions.js)) return;
+
+    console.error("Error processing message:", error);
+    const deliveryCount = msg.info.redeliveryCount || 0;
+    if (deliveryCount >= 3) {
+      await msg.term();
+    } else {
+      await msg.nak(5000);
+    }
+  }
+}
+
+export async function consumeMessages<T>(consumerOptions: ConsumerOptions<T>) {
+  const maxRetries = 3;
+  const retryDelay = 1000;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const { js, streamName, consumerName } = consumerOptions;
+
+      if (!isConnectionActive(js)) return;
+
+      const consumerExists = await checkConsumer(js, streamName, consumerName);
+      if (!consumerExists) {
+        await createJetStreamConsumer(consumerOptions);
+      }
+
+      const pullOptions: PullOptions = {
+        ...DEFAULT_PULL_OPTIONS,
+        ...consumerOptions.pullOptions,
+      };
+
+      const consumer = await js.consumers.get(streamName, consumerName);
+      const messages = await consumer.consume(pullOptions);
+
+      for await (const msg of messages) {
+        await processMessage(msg, consumerOptions);
+        if (!isConnectionActive(js)) break;
+      }
+
+      if (!isConnectionActive(js)) return;
+    } catch (err: any) {
+      if (
+        err.code === "CONNECTION_DRAINING" ||
+        err.code === "CONNECTION_CLOSED"
+      ) {
+        return;
+      }
+
+      if (attempt === maxRetries) {
+        throw new Error(
+          `Failed to set up consumer after ${maxRetries} attempts: ${
+            err.code || err.message
+          }`
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, retryDelay));
+    }
   }
 }
