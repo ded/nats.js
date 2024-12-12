@@ -35,56 +35,94 @@ async function createJetStreamConsumer<T>(consumerOptions: ConsumerOptions<T>) {
 }
 
 export async function consumeMessages<T>(consumerOptions: ConsumerOptions<T>) {
-  const { js } = consumerOptions;
-  const consumerExists = await checkConsumer(
-    js,
-    consumerOptions.streamName,
-    consumerOptions.consumerName
-  );
-  if (!consumerExists) {
-    await createJetStreamConsumer(consumerOptions);
-  }
-  const _pullOptions = consumerOptions.pullOptions;
-  //TODO these options are subject to change but for now they are good
-  const pullOptions: PullOptions = {
-    batch: _pullOptions?.batch || 10, // Number of messages to pull at once
-    expires: _pullOptions?.expires || 10000, // Pull request expires after 10 seconds
-    no_wait: _pullOptions?.no_wait || false, // Wait for messages if none available
-    max_bytes: _pullOptions?.max_bytes || 1 * 1024 * 1024, // 1MB
-    idle_heartbeat: _pullOptions?.idle_heartbeat || 500, // 1 second in nanoseconds
-  };
+  const maxRetries = 3;
+  const retryDelay = 1000;
 
-  try {
-    const consumer = await js.consumers.get(
-      consumerOptions.streamName,
-      consumerOptions.consumerName
-    );
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const { js } = consumerOptions;
 
-    const messages = await consumer.consume(pullOptions);
-    for await (const msg of messages) {
-      try {
-        const messageEnvelope: MessageEnvelope<T> = JSON.parse(
-          msg.data.toString()
-        );
-        console.log(
-          `Received message subject:${msg.subject} id:${messageEnvelope.id}`
-        );
-        // ack the message happens in the processMessage function
-        await consumerOptions.processMessage(messageEnvelope, msg);
-      } catch (error) {
-        console.error("Error processing message:", error);
-        // Handle redelivery based on attempt count
-        const deliveryCount = msg.info.redeliveryCount || 0;
-        if (deliveryCount >= 3) {
-          console.error("Message failed maximum retries:", msg.data.toString());
-          msg.term(); // Terminal error - won't be redelivered
-        } else {
-          msg.nak(5000); // Negative ack - retry after 5 seconds
+      // Skip if connection is draining or closed
+      if ((js as any).nc.isDraining() || (js as any).nc.isClosed()) {
+        return;
+      }
+
+      const consumerExists = await checkConsumer(
+        js,
+        consumerOptions.streamName,
+        consumerOptions.consumerName
+      );
+
+      if (!consumerExists) {
+        await createJetStreamConsumer(consumerOptions);
+      }
+
+      const _pullOptions = consumerOptions.pullOptions;
+      const pullOptions: PullOptions = {
+        batch: _pullOptions?.batch || 10,
+        expires: _pullOptions?.expires || 10000,
+        no_wait: _pullOptions?.no_wait || false,
+        max_bytes: _pullOptions?.max_bytes || 1 * 1024 * 1024,
+        idle_heartbeat: _pullOptions?.idle_heartbeat || 500,
+      };
+
+      const consumer = await js.consumers.get(
+        consumerOptions.streamName,
+        consumerOptions.consumerName
+      );
+
+      const messages = await consumer.consume(pullOptions);
+      for await (const msg of messages) {
+        try {
+          // Check connection state before processing each message
+          if ((js as any).nc.isDraining() || (js as any).nc.isClosed()) {
+            break;
+          }
+
+          const messageEnvelope: MessageEnvelope<T> = JSON.parse(
+            msg.data.toString()
+          );
+          console.log(
+            `Received message subject:${msg.subject} id:${messageEnvelope.id}`
+          );
+          await consumerOptions.processMessage(messageEnvelope, msg);
+        } catch (error) {
+          // Skip error handling if connection is draining/closed
+          if ((js as any).nc.isDraining() || (js as any).nc.isClosed()) {
+            break;
+          }
+
+          console.error("Error processing message:", error);
+          const deliveryCount = msg.info.redeliveryCount || 0;
+          if (deliveryCount >= 3) {
+            await msg.term();
+          } else {
+            await msg.nak(5000);
+          }
         }
       }
+
+      // Exit if connection is draining/closed
+      if ((js as any).nc.isDraining() || (js as any).nc.isClosed()) {
+        return;
+      }
+    } catch (err: any) {
+      // Don't retry if connection is draining/closed
+      if (
+        err.code === "CONNECTION_DRAINING" ||
+        err.code === "CONNECTION_CLOSED"
+      ) {
+        return;
+      }
+
+      if (attempt === maxRetries) {
+        throw new Error(
+          `Failed to set up consumer after ${maxRetries} attempts: ${
+            err.code || err.message
+          }`
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, retryDelay));
     }
-  } catch (error) {
-    console.error("Error in message consumption:", error);
-    throw error;
   }
 }

@@ -42,9 +42,10 @@ describe("JetStream Integration Tests", () => {
   afterAll(async () => {
     console.log("draining nats connection");
     await nc.drain();
+    await nc.close();
     console.log("stopping docker compose");
     await execPromise(`docker compose -f ${DOCKER_COMPOSE_FILE} down`);
-  });
+  }, 300000);
 
   it("should publish a message to a subject in a stream", async () => {
     const messageData1: MessageEnvelope<ItemCreatedEventDto> = {
