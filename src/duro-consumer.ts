@@ -90,7 +90,15 @@ export async function consumeMessages<T>(consumerOptions: ConsumerOptions<T>) {
       const { js, streamName, consumerName } = consumerOptions;
 
       if (!isConnectionActive(js)) return;
-
+      /**
+       * TODO: to be evaluated later
+      if a consumer is not found, we create it otherwise we use the existing one 
+      however, the consumer config is not updated if it already exists
+      we have three approaches with their trade-offs:
+      Current approach: Safe, backward compatible, but inconsistent configs
+      Force update: Consistent configs, but might disrupt existing consumers
+      Version-based: Clean upgrade path, but needs migration strategy
+ */
       const consumerExists = await checkConsumer(js, streamName, consumerName);
       if (!consumerExists) {
         await createJetStreamConsumer(consumerOptions);
