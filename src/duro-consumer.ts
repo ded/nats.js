@@ -9,10 +9,12 @@ import {
 import { checkConsumer } from "./utils";
 import { MessageEnvelope, ConsumerOptions } from "./interfaces";
 
+/**
+ * max_deliver is not set. That means nats tries to deliver a message to the consumer until it is acknowledged. The default is -1 (redeliver until acknowledged). see here:https://docs.nats.io/nats-concepts/jetstream/consumers
+ */
 const DEFAULT_CONSUMER_CONFIG = {
   deliver_policy: DeliverPolicy.All,
   ack_policy: AckPolicy.Explicit,
-  max_deliver: 3,
   ack_wait: 10e9,
   max_ack_pending: 1,
   replay_policy: ReplayPolicy.Instant,
