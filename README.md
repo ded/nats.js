@@ -1,14 +1,6 @@
 # NATS JetStream setup guide to run in local
 
-Guide for setting up NATS JetStream streams and consumers with recommended patterns and commands.
-
 ## How to publish and consume messages in your service
-
-### Install NATS CLI
-
-```bash
-brew install nats-io/nats-tools/nats
-```
 
 ## Nats credentials to connect to the Nats cluster in GCP
 
@@ -34,6 +26,12 @@ brew install nats-io/nats-tools/nats
   - If a consumer is not found in the `EVENTS` stream, it will be created automatically.
 
 ## Usage (if you want to run it locally - you can skip this step)
+
+### Install NATS CLI
+
+```bash
+brew install nats-io/nats-tools/nats
+```
 
 ### Run NATS server with JetStream enabled
 
