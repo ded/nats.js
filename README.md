@@ -1,29 +1,56 @@
-# NATS JetStream setup guide to run in local
+# NATS Credentials and Messaging Conventions
 
-## How to publish and consume messages in your service
+## Connecting to the NATS Cluster
 
-## Nats credentials to connect to the Nats cluster in GCP
+- To connect to the NATS cluster in GCP, retrieve the credentials from **1Password** under `Nats Credentials for dev`.
 
-- Look for `Nats Credentials for dev` in 1password
+---
 
-## Publish a meesage
+## Interface Conventions for Subjects
 
-- Utilize the `@durolabs/nats.js` library to publish messages to the NATS server.
-- Full example here in plm-items: https://github.com/duronext/phoenix/blob/main/apps/plm-items/src/events/item-event.ts. you'll see how to publish a message and what interface to use to publish a message.
-- Conventions:
-  - Messages go to the `EVENTS` stream which is created by default as part of the NATS server setup.
-  - Each message should have a subject that matches the convention `[entity].>` while entity is the name of the entity that is being published in a plural form.
-    - Example: `items.created`, `items.updated`,`users.updated`, `changeorders.updated`.
-    - If a subject is not found in the `EVENTS` stream, it will be created automatically.
+We follow a standard convention for defining message interfaces per subject.  
+- An interface should be created in this package to be shared across all services interested in a particular subject.  
+- This ensures consistent typing and structure for both publishers and consumers.  
 
-## Consume a message
+**Example:**  
+See the interface for [itemCreatedDto](https://github.com/duronext/nats.js/blob/main/src/event-dto/item-created.event.dto.ts).  
 
-- Utilize the `@durolabs/nats.js` library to consume messages from the NATS server.
-- Full example here in eventsourcing: https://github.com/duronext/phoenix/blob/main/apps/eventsourcing/src/consumer/consumer.service.ts
-- Conventions:
-  - Each consumer should have a unique name that matches the convention `[service name].consumer`
-  - Service name should be in the environment variable `SERVICE_NAME`
-  - If a consumer is not found in the `EVENTS` stream, it will be created automatically.
+---
+
+## Publishing Messages
+
+To publish messages, use the `@durolabs/nats.js` library.  
+- **Example:**  
+  See the full implementation [here in plm-items](https://github.com/duronext/phoenix/blob/main/apps/plm-items/src/events/item-event.ts), including how to publish a message and which interfaces to use.
+
+### Conventions for Publishing
+1. **Stream**: Messages are published to the `EVENTS` stream, which is created by default during NATS server setup.
+2. **Subject Naming**:  
+   Each message subject should follow the pattern `[entity].>`, where `entity` is the plural form of the entity being published.  
+   **Examples:**  
+   - `items.created`  
+   - `items.updated`  
+   - `users.updated`  
+   - `changeorders.updated`  
+3. If a subject does not exist in the `EVENTS` stream, it will be created automatically.
+
+---
+
+## Consuming Messages
+
+To consume messages, use the `@durolabs/nats.js` library.  
+- **Example:**  
+  See the full implementation [here in eventsourcing](https://github.com/duronext/phoenix/blob/main/apps/eventsourcing/src/consumer/consumer.service.ts).  
+
+### Conventions for Consumers
+1. **Unique Consumer Name**:  
+   Each consumer should have a unique name that follows the pattern `[service name].consumer`.  
+   The service name must be set in the `SERVICE_NAME` environment variable.  
+2. If a consumer is not found in the `EVENTS` stream, it will be created automatically.
+
+---
+
+
 
 ## Usage (if you want to run it locally - you can skip this step)
 
