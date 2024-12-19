@@ -3,6 +3,9 @@ export interface ItemCreatedEventDto {
   name: string;
   cpn?: string;
   category?: string;
+  libraryId?: string;
+  roomIds?: string[];
+  status?: string;
   createdAt: Date;
   createdBy: string;
 }
