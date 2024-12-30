@@ -9,3 +9,4 @@ export type {
   ProcessMessage,
 } from "./interfaces";
 export { ItemCreatedEventDto } from "./event-dto/item-created.event.dto";
+export { LibraryCreatedEventDto } from "./event-dto/libray-created.event.dto";
