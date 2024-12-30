@@ -1,4 +1,3 @@
-/* main entry point */
 export { connectNats, disconnectNats } from "./connection";
 export { consumeMessages } from "./duro-consumer";
 export { publish } from "./duro-producer";
