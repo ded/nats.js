@@ -21,12 +21,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
-          scope: '@durolabs'
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+          scope: "@durolabs"
 
       - name: Install dependencies
         run: npm ci
+
       - name: Run tests
         run: npm test
 
@@ -48,7 +49,7 @@ jobs:
           git config --local user.name "github-actions[bot]"
 
       - name: Bump version
-        run: npm run version:${{ steps.version.outputs.bump }} --no-git-tag-version
+        run: npm version ${{ steps.version.outputs.bump }} --no-commit-hooks --no-git-tag-version
 
       - name: Build package
         run: npm run build
@@ -58,7 +59,18 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Push version changes
+      - name: Update dist-tag
+        run: npm dist-tag add @durolabs/nats.js@$(node -p "require('./package.json').version") latest
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Push version changes and tags
         run: git push origin HEAD:main --follow-tags
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify published package
+        run: |
+          for i in {1..10}; do
+            npm info @durolabs/nats.js | grep "$(node -p "require('./package.json').version")" && break || sleep 5;
+          done
