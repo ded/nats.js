@@ -7,13 +7,3 @@ services:
       - "18222:8222"
     volumes:
       - "./config/nats-server.conf:/etc/nats/nats-server.conf"
-      - "nats-data:/data"
-    networks:
-      - dataroom-test
-
-volumes:
-  nats-data:
-
-networks:
-  dataroom-test:
-    driver: bridge
