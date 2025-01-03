@@ -3,7 +3,7 @@ services:
     image: nats:2.10.24
     command: ["-c", "/etc/nats/nats-server.conf", "-js"]
     ports:
-      - "14222:4222"
+      - "5222:4222"
       - "18222:8222"
     volumes:
       - "./config/nats-server.conf:/etc/nats/nats-server.conf"

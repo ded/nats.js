@@ -28,7 +28,7 @@ describe("JetStream Integration Tests", () => {
       console.log("waiting for nats to start");
       await new Promise((resolve) => setTimeout(resolve, 2000));
       console.log("connecting to nats");
-      nc = await connect({ servers: "nats://localhost:14222" });
+      nc = await connect({ servers: "nats://localhost:5222" });
       js = nc.jetstream();
       const jsm = await js.jetstreamManager();
       // only add subject1 to the stream
