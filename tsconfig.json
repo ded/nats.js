@@ -1,11 +1,17 @@
 {
   "compilerOptions": {
-    "target": "es6",
+    "target": "es2017",
     "module": "commonjs",
-    "declaration": true,
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "skipLibCheck": true,
     "outDir": "./dist",
-    "strict": true,
-    "esModuleInterop": true
+    "baseUrl": "./",
+    "incremental": true
   },
-  "include": ["*.ts", "src/index.ts", "src/duro-consumer.ts", "src/duro-producer.ts"]
+  "exclude": ["node_modules", "node_modules/vite", "node_modules/rollup"]
 }

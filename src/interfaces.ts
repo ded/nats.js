@@ -100,3 +100,8 @@ export interface ConsumerOptions<T> {
   consumerConfig?: ConsumerConfig;
   pullOptions?: PullOptions;
 }
+
+export interface MessageInfo {
+  id: string;
+  subject: string;
+}
