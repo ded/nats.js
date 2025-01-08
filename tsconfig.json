@@ -1,17 +1,17 @@
 {
   "compilerOptions": {
-    "target": "es2017",
+    "target": "es6",
     "module": "commonjs",
-    "moduleResolution": "node",
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "sourceMap": true,
-    "skipLibCheck": true,
+    "declaration": true,
     "outDir": "./dist",
-    "baseUrl": "./",
-    "incremental": true
+    "strict": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
-  "exclude": ["node_modules", "node_modules/vite", "node_modules/rollup"]
+  "include": [
+    "*.ts",
+    "src/**/*.ts", // This will include all .ts files in src and subdirectories
+    "src/services/message-deduplication.service.ts"
+  ]
 }
