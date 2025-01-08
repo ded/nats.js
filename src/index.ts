@@ -10,8 +10,4 @@ export type {
 export { ItemCreatedEventDto } from "./event-dto/item-created.event.dto";
 export { LibraryCreatedEventDto } from "./event-dto/libray-created.event.dto";
 export { ProcessedEvent } from "./services/processed-event.entity";
-export type { MessageInfo } from "./interfaces";
-export {
-  MessageDeduplicationService,
-  ProcessedEventCleanupService,
-} from "./services/mssage-deduplication.service";
+export { MessageDeduplicationService } from "./services/mssage-deduplication.service";
