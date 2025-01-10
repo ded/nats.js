@@ -6,7 +6,7 @@ import {
   ReplayPolicy,
   JsMsg,
 } from "nats";
-import { checkConsumer } from "./utils";
+import { ensureConsumerConfiguration } from "./utils";
 import { MessageEnvelope, ConsumerOptions } from "./interfaces";
 
 const DEFAULT_CONSUMER_CONFIG = {
@@ -90,11 +90,10 @@ export async function consumeMessages<T>(consumerOptions: ConsumerOptions<T>) {
       const { js, streamName, consumerName } = consumerOptions;
 
       if (!isConnectionActive(js)) return;
-
-      const consumerExists = await checkConsumer(js, streamName, consumerName);
-      if (!consumerExists) {
-        await createJetStreamConsumer(consumerOptions);
-      }
+      await ensureConsumerConfiguration(
+        consumerOptions,
+        DEFAULT_CONSUMER_CONFIG
+      );
 
       const pullOptions: PullOptions = {
         ...DEFAULT_PULL_OPTIONS,
