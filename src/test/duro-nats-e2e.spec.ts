@@ -219,4 +219,135 @@ describe("JetStream Integration Tests", () => {
     expect(messageReceived[4].createdAt).toBeInstanceOf(Date);
     expect(messageReceived[4].data.cpn).toBe(messageData5.data.cpn);
   }, 50000);
+
+  it("should update consumer when new subject is added", async () => {
+    // Create unique subjects and stream name for this test
+    const testId = Date.now();
+    const updateTestStream = `updateTestStream${testId}`;
+    const updateSubject1 = `update.test.${testId}.subject1`;
+    const updateSubject2 = `update.test.${testId}.subject2`;
+    const updateTestConsumerName = `updateTestConsumer${testId}`;
+
+    const messageReceived: MessageEnvelope<ItemCreatedEventDto>[] = [];
+
+    // Create new stream for this test
+    const jsm = await js.jetstreamManager();
+    await jsm.streams.add({
+      name: updateTestStream,
+      subjects: [updateSubject1, updateSubject2],
+    });
+
+    const processMessage = async (
+      messageEnvelope: MessageEnvelope<ItemCreatedEventDto>,
+      msg: JsMsg
+    ) => {
+      messageEnvelope.createdAt = new Date(messageEnvelope.createdAt);
+      console.log(
+        `Processing message for ${updateTestConsumerName}:`,
+        messageEnvelope.subject
+      );
+      messageReceived.push(messageEnvelope);
+      msg.ack();
+    };
+
+    // Initial consumer setup with just first subject
+    const initialConsumerOptions: ConsumerOptions<ItemCreatedEventDto> = {
+      streamName: updateTestStream,
+      subjects: [updateSubject1],
+      consumerName: updateTestConsumerName,
+      js,
+      processMessage,
+    };
+
+    // Start initial consumer
+    let stopConsumer = false;
+    const consumePromise = (async () => {
+      while (!stopConsumer) {
+        await consumeMessages(initialConsumerOptions);
+      }
+    })();
+
+    // Create and publish a message to first subject
+    const message1: MessageEnvelope<ItemCreatedEventDto> = {
+      id: uuidv4(),
+      data: {
+        id: "test-item-1",
+        name: "test-item-name-1",
+        createdAt: new Date(),
+        createdBy: "test-created-by-1",
+      },
+      createdAt: new Date(),
+      subject: updateSubject1,
+      createdBy: "test-created-by-1",
+    };
+
+    await publish({
+      js,
+      nc,
+      streamName: updateTestStream,
+      messageEnvelope: message1,
+    });
+
+    // Wait for message processing
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
+    // Verify first message was received
+    expect(messageReceived.length).toBe(1);
+    expect(messageReceived[0].subject).toBe(updateSubject1);
+
+    // Update consumer with new subject
+    const updatedConsumerOptions: ConsumerOptions<ItemCreatedEventDto> = {
+      ...initialConsumerOptions,
+      subjects: [updateSubject1, updateSubject2],
+    };
+
+    // Stop previous consumer and start updated one
+    stopConsumer = true;
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    stopConsumer = false;
+
+    const updateConsumePromise = (async () => {
+      while (!stopConsumer) {
+        await consumeMessages(updatedConsumerOptions);
+      }
+    })();
+
+    // Create and publish a message to the new subject
+    const message2: MessageEnvelope<ItemCreatedEventDto> = {
+      id: uuidv4(),
+      data: {
+        id: "test-item-2",
+        name: "test-item-name-2",
+        createdAt: new Date(),
+        createdBy: "test-created-by-2",
+      },
+      createdAt: new Date(),
+      subject: updateSubject2,
+      createdBy: "test-created-by-2",
+    };
+
+    await publish({
+      js,
+      nc,
+      streamName: updateTestStream,
+      messageEnvelope: message2,
+    });
+
+    // Wait for message processing
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
+    // Verify both messages were received
+    expect(messageReceived.length).toBe(2);
+    expect(messageReceived[0].subject).toBe(updateSubject1);
+    expect(messageReceived[1].subject).toBe(updateSubject2);
+
+    // Cleanup
+    stopConsumer = true;
+    try {
+      await jsm.consumers.delete(updateTestStream, updateTestConsumerName);
+      await jsm.streams.delete(updateTestStream);
+    } catch (error) {
+      console.log("Error during cleanup:", error);
+    }
+  }, 30000);
 });
