@@ -1,4 +1,4 @@
-export interface RoomCreatedEventDto {
+export interface DataroomCreatedEventDto {
   id: string;
   name: string;
   libraryId: string;
